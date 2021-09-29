@@ -1,20 +1,17 @@
 package com.example.lesson2
 
-import android.graphics.Color
 import android.os.Bundle
-import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.lesson2.databinding.ContentListBinding
-import com.example.lesson2.databinding.ItemItemBinding
 
-class ListFragment: Fragment() {
+class ListFragment: Fragment(), ItemHolder.IListener {
     protected var binding: ContentListBinding? = null
+    protected var itemAdapter = ItemAdapter(this)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,7 +25,7 @@ class ListFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding?.recyclerView?.adapter = ItemAdapter()
+        binding?.recyclerView?.adapter = itemAdapter
         binding?.recyclerView?.layoutManager = GridLayoutManager(requireContext(), 3)
 
         binding?.fab?.setOnClickListener {
@@ -37,8 +34,8 @@ class ListFragment: Fragment() {
     }
 
     private fun addItem() {
-//        val adapter = (binding?.recycler?.adapter as ItemAdapter).increment()
-//        binding?.recycler.scrollToPosition(adapter.counter)
+        itemAdapter.increment()
+        binding?.recyclerView?.scrollToPosition(itemAdapter.itemCount - 1)
     }
 
     override fun onDestroyView() {
@@ -46,49 +43,14 @@ class ListFragment: Fragment() {
         binding = null
     }
 
-    class ItemHolder(val binding: ItemItemBinding): RecyclerView.ViewHolder(binding.root) {
-        var item = 0
+    override fun onItemClicked(number: Int) {
+        Toast.makeText(requireContext(), "position: $number", Toast.LENGTH_SHORT).show()
 
-        init {
-            binding.textView.setOnClickListener {
-//                listener.onItemSelected(item)
-            }
-        }
-
-        fun bind(position: Int) {
-            binding.textView.text = "$position"
-
-            val color = when (position % 2 == 0) {
-                true -> Color.BLUE
-                false -> Color.RED
-            }
-            binding.textView.setBackgroundColor(color)
-        }
-
-        interface IListener {
-            fun onItemClicked(number: Int)
-        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, NumberFragment.newInstance(number), "$number")
+            .addToBackStack(null)
+            .commit()
     }
 
-//    class ItemAdapter(var listener: ItemHolder.IListener): RecyclerView.Adapter<ItemHolder>() {
-    class ItemAdapter(): RecyclerView.Adapter<ItemHolder>() {
-        var counter = 100
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
-            val inflater = LayoutInflater.from(parent.context)
-            val tmp = ItemItemBinding.inflate(inflater, parent, false)
-            return ItemHolder(tmp)
-        }
-
-        override fun onBindViewHolder(holder: ItemHolder, position: Int) {
-            holder.bind(position)
-        }
-
-        override fun getItemCount(): Int = counter
-
-        fun increment() {
-            counter++
-            notifyItemInserted(counter - 1)
-        }
-    }
 }
